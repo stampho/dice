@@ -17,7 +17,7 @@ void show(const char *id, Mat image)
 
 int main(int argc, char** argv)
 {
-    DImage dimage("dice.png");
+    DImage dimage("../../samples/dice.png");
     dimage.printDetails();
     Mat image = dimage.getMat();
     show("Dice Image", image);
