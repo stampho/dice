@@ -16,7 +16,7 @@ public:
     ~DiceWindow();
 
 private:
-    Ui::DiceWindow *ui;
+    Ui::DiceWindow* m_ui;
 };
 
 #endif // DICESWINDOW_H

@@ -16,13 +16,17 @@ SOURCES += main.cpp\
         dicewindow.cpp \
     API/cube.cpp \
     API/dimage.cpp \
-    API/face.cpp
+    API/face.cpp \
+    imageexplorer.cpp \
+    imageviewer.cpp
 
 HEADERS  += dicewindow.h \
     API/core.h \
     API/cube.h \
     API/dimage.h \
-    API/face.h
+    API/face.h \
+    imageexplorer.h \
+    imageviewer.h
 
 FORMS    += dicewindow.ui
 
