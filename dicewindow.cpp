@@ -53,9 +53,10 @@ static QImage Mat2QImage(const cv::Mat& inMat)
 }
 
 
-DiceWindow::DiceWindow(QWidget* parent) :
-    QMainWindow(parent),
-    m_ui(new Ui::DiceWindow)
+DiceWindow::DiceWindow(QWidget* parent)
+    : QMainWindow(parent)
+    , m_ui(new Ui::DiceWindow)
+    , m_imageStack(NULL)
 {
     m_ui->setupUi(this);
 
@@ -71,6 +72,7 @@ DiceWindow::DiceWindow(QWidget* parent) :
     connect(m_ui->fileBrowser, SIGNAL(clicked(QModelIndex)), imageLoader, SLOT(load(QModelIndex)));
 
     connect(imageLoader, SIGNAL(loaded(DImage*)), this, SLOT(initImageStack(DImage*)));
+
 }
 
 DiceWindow::~DiceWindow()
@@ -79,10 +81,17 @@ DiceWindow::~DiceWindow()
 }
 
 void DiceWindow::initImageStack(DImage* dimage) {
+    if (m_imageStack != NULL)
+        delete m_imageStack;
+
     m_imageStack = new ImageStack(dimage);
+
     connect(m_imageStack, SIGNAL(ready(int, int)), this, SLOT(showImageStack(int, int)));
-    // TODO: implement proper init function in ImageStack instead of using this
-    m_imageStack->preProcess();
+    connect(m_ui->threshSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
+    connect(m_ui->maxvalSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
+    connect(m_ui->threshInvertToggle, SIGNAL(stateChanged(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
+
+    m_imageStack->init();
 }
 
 void DiceWindow::showImageStack(int phase, int result)

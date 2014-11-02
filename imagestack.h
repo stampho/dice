@@ -8,12 +8,21 @@
 #include "API/face.h"
 #include "API/cube.h"
 
+struct ThresholdParams {
+    int thresh;
+    int maxval;
+    bool invert;
+};
+
 class ImageStack : public QObject
 {
     Q_OBJECT
 public:
     explicit ImageStack(QObject* parent = 0);
     ImageStack(DImage* image, QObject* parent = 0);
+    ~ImageStack();
+
+    void init();
 
     enum Phase {
         Original,
@@ -25,7 +34,6 @@ public:
         PipDetection,
         PhaseCount
     };
-
     DImage* getImage(Phase phase);
 
 signals:
@@ -45,8 +53,11 @@ public slots:
     void detectTops(int prev, QVector<Cube>);
     void detectPips(int prev, QVector<DImage>);
 
+    void onThresholdParamChanged(int value);
+
 private:
     DImage m_stack[PhaseCount];
+    ThresholdParams m_thresholdParams;
 
 };
 

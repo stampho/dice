@@ -25,10 +25,20 @@ ImageStack::ImageStack(DImage* image, QObject* parent)
     connect(this, SIGNAL(detectCubesDone(int, QVector<Cube>)), this, SLOT(detectTops(int, QVector<Cube>)));
     connect(this, SIGNAL(detectTopsDone(int, QVector<DImage>)), this, SLOT(detectPips(int, QVector<DImage>)));
     connect(this, SIGNAL(detectPipsDone(int, int)), this, SIGNAL(ready(int, int)));
-
-    //preProcess();
 }
 
+ImageStack::~ImageStack()
+{
+    //qDebug("destruct ImageStack");
+}
+
+void ImageStack::init()
+{
+    m_thresholdParams.thresh = 127;
+    m_thresholdParams.maxval = 255;
+    m_thresholdParams.invert = false;
+    preProcess();
+}
 
 DImage* ImageStack::getImage(Phase phase)
 {
@@ -45,18 +55,19 @@ void ImageStack::preProcess()
 
 void ImageStack::detectEdges(int prev)
 {
-    DImage* image = new DImage(m_stack[prev].getMat());
+    cv::Mat image = m_stack[prev].getMat().clone();
+    cv::threshold(image, image, m_thresholdParams.thresh, m_thresholdParams.maxval, m_thresholdParams.invert ? cv::THRESH_BINARY_INV : cv::THRESH_BINARY);
 
-    m_stack[EdgeDetection] = DImage(image->getBin());
+    m_stack[EdgeDetection] = DImage(image);
     Q_EMIT(detectEdgesDone(EdgeDetection));
 }
 
 void ImageStack::detectFaces(int prev)
 {
-    DImage* binImage = new DImage(m_stack[prev].getMat());
+    cv::Mat image = m_stack[PreProcess].getMat().clone();
+    cv::Mat binImage = m_stack[prev].getMat().clone();
 
-    cv::Mat image = m_stack[PreProcess].getMat();
-    QVector<Face> faces = QVector<Face>::fromStdVector(binImage->collectFaces());
+    QVector<Face> faces = QVector<Face>::fromStdVector(DImage(binImage).collectFaces());
     for (int i = 0; i < faces.size(); ++i) {
         Face face = faces.at(i);
         image = face.draw(image);
@@ -118,4 +129,19 @@ void ImageStack::detectPips(int prev, QVector<DImage> topFaces)
 
     m_stack[PipDetection] = DImage(image->drawPips(pips.toStdVector()));
     Q_EMIT(detectPipsDone(PipDetection, pips.size()));
+}
+
+void ImageStack::onThresholdParamChanged(int value)
+{
+    QObject* sender = QObject::sender();
+    QString id = sender->objectName();
+
+    if (id.compare("threshSlider") == 0)
+        m_thresholdParams.thresh = value;
+    else if (id.compare("maxvalSlider") == 0)
+        m_thresholdParams.maxval = value;
+    else if (id.compare("threshInvertToggle") == 0)
+        m_thresholdParams.invert = (value > 0);
+
+    detectEdges(PreProcess);
 }
