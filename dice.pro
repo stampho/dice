@@ -18,7 +18,8 @@ SOURCES += main.cpp\
     API/dimage.cpp \
     API/face.cpp \
     imageexplorer.cpp \
-    imageviewer.cpp
+    imageloader.cpp \
+    imagestack.cpp
 
 HEADERS  += dicewindow.h \
     API/core.h \
@@ -26,7 +27,8 @@ HEADERS  += dicewindow.h \
     API/dimage.h \
     API/face.h \
     imageexplorer.h \
-    imageviewer.h
+    imageloader.h \
+    imagestack.h
 
 FORMS    += dicewindow.ui
 

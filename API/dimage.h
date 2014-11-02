@@ -6,6 +6,7 @@
 
 class Image {
 public:
+    Image();
     Image(const char* imagePath);
     Image(cv::Mat image);
 
@@ -23,6 +24,7 @@ protected:
 
 class DImage : public Image {
 public:
+    DImage();
     DImage(const char* imagePath);
     DImage(cv::Mat image);
 

@@ -7,6 +7,9 @@
 
 using namespace cv;
 
+Image::Image()
+{}
+
 Image::Image(const char* imagePath)
 {
     m_image = imread(imagePath, CV_LOAD_IMAGE_COLOR);
@@ -74,6 +77,9 @@ void Image::printDetails()
 }
 
 
+DImage::DImage()
+    : Image()
+{}
 
 DImage::DImage(const char* imagePath)
     : Image(imagePath)
