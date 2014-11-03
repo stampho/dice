@@ -14,7 +14,7 @@
 struct ThresholdParams {
     int thresh;
     int maxval;
-    bool invert;
+    int type;
 };
 
 class ImageStack : public QObject
@@ -37,7 +37,9 @@ public:
         PipDetection,
         PhaseCount
     };
+
     cv::Mat getImage(Phase phase);
+    ThresholdParams* getThresholdParams();
 
 signals:
     void preProcessDone(int phase);

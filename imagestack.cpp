@@ -28,13 +28,18 @@ void ImageStack::init()
 {
     m_thresholdParams.thresh = 127;
     m_thresholdParams.maxval = 255;
-    m_thresholdParams.invert = false;
+    m_thresholdParams.type = cv::THRESH_BINARY;
     preProcess();
 }
 
 cv::Mat ImageStack::getImage(Phase phase)
 {
     return m_stack[phase];
+}
+
+ThresholdParams* ImageStack::getThresholdParams()
+{
+    return &m_thresholdParams;
 }
 
 void ImageStack::preProcess()
@@ -53,7 +58,7 @@ void ImageStack::detectEdges(int prev)
     Q_UNUSED(prev);
 
     cv::Mat image = m_stack[PreProcess].clone();
-    cv::threshold(image, image, m_thresholdParams.thresh, m_thresholdParams.maxval, m_thresholdParams.invert ? cv::THRESH_BINARY_INV : cv::THRESH_BINARY);
+    cv::threshold(image, image, m_thresholdParams.thresh, m_thresholdParams.maxval, m_thresholdParams.type);
 
     m_stack[EdgeDetection] = image;
     Q_EMIT(detectEdgesDone(EdgeDetection));
@@ -139,8 +144,9 @@ void ImageStack::onThresholdParamChanged(int value)
         m_thresholdParams.thresh = value;
     else if (id.compare("maxvalSlider") == 0)
         m_thresholdParams.maxval = value;
-    else if (id.compare("threshInvertToggle") == 0)
-        m_thresholdParams.invert = (value > 0);
+    else if (id.compare("threshTypeGroup") == 0) {
+        m_thresholdParams.type = value;
+    }
 
     detectEdges(PreProcess);
 }

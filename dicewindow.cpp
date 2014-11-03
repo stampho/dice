@@ -60,6 +60,12 @@ DiceWindow::DiceWindow(QWidget* parent)
         m_ui->imageSlide->layout()->addWidget(m_images.at(i));
     }
 
+    m_ui->threshTypeGroup->setId(m_ui->binaryButton, cv::THRESH_BINARY);
+    m_ui->threshTypeGroup->setId(m_ui->binaryinvButton, cv::THRESH_BINARY_INV);
+    m_ui->threshTypeGroup->setId(m_ui->truncButton, cv::THRESH_TRUNC);
+    m_ui->threshTypeGroup->setId(m_ui->tozeroButton, cv::THRESH_TOZERO);
+    m_ui->threshTypeGroup->setId(m_ui->tozeroinvButton, cv::THRESH_TOZERO_INV);
+
     ImageExplorer* imageExplorer = new ImageExplorer(m_ui);
     ImageLoader* imageLoader = new ImageLoader(imageExplorer);
 
@@ -74,6 +80,7 @@ DiceWindow::~DiceWindow()
     delete m_ui;
 }
 
+
 void DiceWindow::initImageStack(cv::Mat matImage) {
     if (m_imageStack != NULL)
         delete m_imageStack;
@@ -81,9 +88,13 @@ void DiceWindow::initImageStack(cv::Mat matImage) {
     m_imageStack = new ImageStack(matImage);
 
     connect(m_imageStack, SIGNAL(ready(int, int)), this, SLOT(showImageStack(int, int)));
+    connect(m_imageStack, SIGNAL(ready(int, int)), this, SLOT(initThresh(int, int)));
+
     connect(m_ui->threshSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
+    connect(m_ui->threshSlider, SIGNAL(valueChanged(int)), this, SLOT(onThreshChanged(int)));
     connect(m_ui->maxvalSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
-    connect(m_ui->threshInvertToggle, SIGNAL(stateChanged(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
+    connect(m_ui->maxvalSlider, SIGNAL(valueChanged(int)), this, SLOT(onThreshChanged(int)));
+    connect(m_ui->threshTypeGroup, SIGNAL(buttonPressed(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
 
     m_imageStack->init();
 }
@@ -100,4 +111,31 @@ void DiceWindow::showImageStack(int phase, int result)
         label->setPixmap(pixmap);
         label->setFixedSize(pixmap.size());
     }
+}
+
+void DiceWindow::initThresh(int phase, int result)
+{
+    Q_UNUSED(phase);
+    Q_UNUSED(result);
+
+    ThresholdParams* params = m_imageStack->getThresholdParams();
+
+    m_ui->threshDisplay->setText(QString::number(params->thresh));
+    m_ui->maxvalDisplay->setText(QString::number(params->maxval));
+
+    m_ui->threshSlider->setSliderPosition(params->thresh);
+    m_ui->maxvalSlider->setSliderPosition(params->maxval);
+
+    m_ui->threshTypeGroup->button(params->type)->setChecked(true);
+}
+
+void DiceWindow::onThreshChanged(int value)
+{
+    QObject* sender = QObject::sender();
+    QString id = sender->objectName();
+
+    if (id.compare("threshSlider") == 0)
+        m_ui->threshDisplay->setText(QString::number(value));
+    else if (id.compare("maxvalSlider") == 0)
+        m_ui->maxvalDisplay->setText(QString::number(value));
 }

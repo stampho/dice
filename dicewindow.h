@@ -27,6 +27,8 @@ public:
 public slots:
     void initImageStack(cv::Mat matImage);
     void showImageStack(int phase, int result);
+    void initThresh(int phase, int result);
+    void onThreshChanged(int value);
 
 private:
     Ui::DiceWindow* m_ui;
