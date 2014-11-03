@@ -6,8 +6,11 @@
 #include <QLabel>
 #include <QVector>
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
+
 class ImageStack;
-class DImage;
 
 namespace Ui {
 class DiceWindow;
@@ -18,11 +21,11 @@ class DiceWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit DiceWindow(QWidget *parent = 0);
+    explicit DiceWindow(QWidget* parent = 0);
     ~DiceWindow();
 
 public slots:
-    void initImageStack(DImage* dimage);
+    void initImageStack(cv::Mat matImage);
     void showImageStack(int phase, int result);
 
 private:

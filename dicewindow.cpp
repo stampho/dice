@@ -6,11 +6,6 @@
 
 #include <QDebug>
 
-#include "API/dimage.h"
-
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-
 /*
  * Based on: http://asmaloney.com/2013/11/code/converting-between-cvmat-and-qimage-or-qpixmap
  */
@@ -71,8 +66,7 @@ DiceWindow::DiceWindow(QWidget* parent)
     connect(m_ui->dirBrowser, SIGNAL(clicked(QModelIndex)), imageExplorer, SLOT(dirSelected(QModelIndex)));
     connect(m_ui->fileBrowser, SIGNAL(clicked(QModelIndex)), imageLoader, SLOT(load(QModelIndex)));
 
-    connect(imageLoader, SIGNAL(loaded(DImage*)), this, SLOT(initImageStack(DImage*)));
-
+    connect(imageLoader, SIGNAL(loaded(cv::Mat)), this, SLOT(initImageStack(cv::Mat)));
 }
 
 DiceWindow::~DiceWindow()
@@ -80,11 +74,11 @@ DiceWindow::~DiceWindow()
     delete m_ui;
 }
 
-void DiceWindow::initImageStack(DImage* dimage) {
+void DiceWindow::initImageStack(cv::Mat matImage) {
     if (m_imageStack != NULL)
         delete m_imageStack;
 
-    m_imageStack = new ImageStack(dimage);
+    m_imageStack = new ImageStack(matImage);
 
     connect(m_imageStack, SIGNAL(ready(int, int)), this, SLOT(showImageStack(int, int)));
     connect(m_ui->threshSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
@@ -100,7 +94,7 @@ void DiceWindow::showImageStack(int phase, int result)
     Q_UNUSED(result);
 
     for (int i = 0; i < m_images.size(); ++i) {
-        QImage qimage = Mat2QImage(m_imageStack->getImage((ImageStack::Phase)i)->getMat());
+        QImage qimage = Mat2QImage(m_imageStack->getImage((ImageStack::Phase)i));
         QPixmap pixmap = QPixmap::fromImage(qimage);
         QLabel* label = m_images.at(i);
         label->setPixmap(pixmap);

@@ -1,7 +1,8 @@
 #include "imageloader.h"
 
 #include "imageexplorer.h"
-#include "API/dimage.h"
+
+#include <opencv2/highgui/highgui.hpp>
 
 #include <QDebug>
 
@@ -18,8 +19,8 @@ ImageLoader::ImageLoader(ImageExplorer* explorer, QObject* parent)
 
 void ImageLoader::load(QString path)
 {
-    m_dimage = new DImage(path.toStdString().c_str());
-    Q_EMIT(loaded(m_dimage));
+    m_matImage = cv::imread(path.toStdString().c_str(), CV_LOAD_IMAGE_COLOR);
+    Q_EMIT(loaded(m_matImage));
 }
 
 void ImageLoader::load(QModelIndex index)
@@ -28,6 +29,6 @@ void ImageLoader::load(QModelIndex index)
     load(path);
 }
 
-DImage* ImageLoader::get() {
-    return m_dimage;
+cv::Mat ImageLoader::get() {
+    return m_matImage;
 }

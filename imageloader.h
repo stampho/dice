@@ -4,7 +4,9 @@
 #include <QObject>
 #include <QModelIndex>
 
-class DImage;
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 class ImageExplorer;
 
 class ImageLoader : public QObject
@@ -14,10 +16,10 @@ public:
     explicit ImageLoader(QObject* parent = 0);
     ImageLoader(ImageExplorer* explorer, QObject* parent = 0);
 
-    DImage* get();
+    cv::Mat get();
 
 signals:
-    void loaded(DImage* dimage);
+    void loaded(cv::Mat dimage);
 
 public slots:
     void load(QString path);
@@ -25,7 +27,7 @@ public slots:
 
 private:
     ImageExplorer* m_explorer;
-    DImage* m_dimage;
+    cv::Mat m_matImage;
 };
 
 #endif // IMAGELOADER_H
