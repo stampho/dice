@@ -17,6 +17,19 @@ struct ThresholdParams {
     int type;
 };
 
+struct Outline {
+    Outline()
+    {}
+
+    Outline(Contour contour, Contour approx)
+        : contour(contour)
+        , approx(approx)
+    {}
+
+    Contour contour;
+    Contour approx;
+};
+
 class ImageStack : public QObject
 {
     Q_OBJECT
@@ -31,6 +44,7 @@ public:
         Original,
         PreProcess,
         EdgeDetection,
+        ContourDetection,
         FaceDetection,
         CubeDetection,
         TopDetection,
@@ -44,6 +58,7 @@ public:
 signals:
     void preProcessDone(int phase);
     void detectEdgesDone(int phase);
+    void detectContoursDone(int phase, QVector<Outline>);
     void detectFacesDone(int phase, QVector<Face>);
     void detectCubesDone(int phase, QVector<Cube>);
     void detectTopsDone(int phase, QVector<cv::Mat>);
@@ -53,7 +68,8 @@ signals:
 public slots:
     void preProcess();
     void detectEdges(int prev);
-    void detectFaces(int prev);
+    void detectContours(int prev);
+    void detectFaces(int prev, QVector<Outline>);
     void detectCubes(int prev, QVector<Face>);
     void detectTops(int prev, QVector<Cube>);
     void detectPips(int prev, QVector<cv::Mat>);
@@ -64,7 +80,8 @@ private:
     cv::Mat m_stack[PhaseCount];
     ThresholdParams m_thresholdParams;
 
-    static QVector<Face> collectFaces(cv::Mat);
+    static QVector<Outline> collectOutlines(cv::Mat imageBin);
+    static QVector<Face> collectFaces(QVector<Outline> outlines);
     static QVector<Pip> collectPips(cv::Mat);
     static cv::Mat drawPips(cv::Mat image, QVector<Pip> pips, cv::Scalar color = cv::Scalar(0, 0, 255));
 };
