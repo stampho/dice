@@ -88,13 +88,20 @@ void DiceWindow::initImageStack(cv::Mat matImage) {
     m_imageStack = new ImageStack(matImage);
 
     connect(m_imageStack, SIGNAL(ready(int, int)), this, SLOT(showImageStack(int, int)));
-    connect(m_imageStack, SIGNAL(ready(int, int)), this, SLOT(initThresh(int, int)));
+    connect(m_imageStack, SIGNAL(ready(int, int)), this, SLOT(initControllers(int, int)));
 
     connect(m_ui->threshSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
     connect(m_ui->threshSlider, SIGNAL(valueChanged(int)), this, SLOT(onThreshChanged(int)));
     connect(m_ui->maxvalSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
     connect(m_ui->maxvalSlider, SIGNAL(valueChanged(int)), this, SLOT(onThreshChanged(int)));
     connect(m_ui->threshTypeGroup, SIGNAL(buttonPressed(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
+
+    connect(m_ui->lowThresholdSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onCannyParamChanged(int)));
+    connect(m_ui->lowThresholdSlider, SIGNAL(valueChanged(int)), this, SLOT(onCannyChanged(int)));
+    connect(m_ui->ratioSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onCannyParamChanged(int)));
+    connect(m_ui->ratioSlider, SIGNAL(valueChanged(int)), this, SLOT(onCannyChanged(int)));
+    connect(m_ui->kernelSizeSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onCannyParamChanged(int)));
+    connect(m_ui->kernelSizeSlider, SIGNAL(valueChanged(int)), this, SLOT(onCannyChanged(int)));
 
     m_imageStack->init();
 }
@@ -113,20 +120,30 @@ void DiceWindow::showImageStack(int phase, int result)
     }
 }
 
-void DiceWindow::initThresh(int phase, int result)
+void DiceWindow::initControllers(int phase, int result)
 {
     Q_UNUSED(phase);
     Q_UNUSED(result);
 
-    ThresholdParams* params = m_imageStack->getThresholdParams();
+    {
+        ThresholdParams* params = m_imageStack->getThresholdParams();
+        m_ui->threshDisplay->setText(QString::number(params->thresh));
+        m_ui->maxvalDisplay->setText(QString::number(params->maxval));
+        m_ui->threshSlider->setSliderPosition(params->thresh);
+        m_ui->maxvalSlider->setSliderPosition(params->maxval);
+        m_ui->threshTypeGroup->button(params->type)->setChecked(true);
+    }
 
-    m_ui->threshDisplay->setText(QString::number(params->thresh));
-    m_ui->maxvalDisplay->setText(QString::number(params->maxval));
+    {
+        CannyParams* params = m_imageStack->getCannyParams();
+        m_ui->lowThresholdDisplay->setText(QString::number(params->lowThreshold));
+        m_ui->ratioDisplay->setText(QString::number(params->ratio));
+        m_ui->kernelSizeDisplay->setText(QString::number(params->kernelSize));
+        m_ui->lowThresholdSlider->setSliderPosition(params->lowThreshold);
+        m_ui->ratioSlider->setSliderPosition(params->ratio);
+        m_ui->kernelSizeSlider->setSliderPosition(params->kernelSize);
 
-    m_ui->threshSlider->setSliderPosition(params->thresh);
-    m_ui->maxvalSlider->setSliderPosition(params->maxval);
-
-    m_ui->threshTypeGroup->button(params->type)->setChecked(true);
+    }
 }
 
 void DiceWindow::onThreshChanged(int value)
@@ -138,4 +155,17 @@ void DiceWindow::onThreshChanged(int value)
         m_ui->threshDisplay->setText(QString::number(value));
     else if (id.compare("maxvalSlider") == 0)
         m_ui->maxvalDisplay->setText(QString::number(value));
+}
+
+void DiceWindow::onCannyChanged(int value)
+{
+    QObject* sender = QObject::sender();
+    QString id = sender->objectName();
+
+    if (id.compare("lowThresholdSlider") == 0)
+        m_ui->lowThresholdDisplay->setText(QString::number(value));
+    else if (id.compare("ratioSlider") == 0)
+        m_ui->ratioDisplay->setText(QString::number(value));
+    else if (id.compare("kernelSizeSlider") == 0)
+        m_ui->kernelSizeDisplay->setText(QString::number(value));
 }

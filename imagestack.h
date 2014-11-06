@@ -17,6 +17,12 @@ struct ThresholdParams {
     int type;
 };
 
+struct CannyParams {
+    int lowThreshold;
+    int ratio;
+    int kernelSize;
+};
+
 struct Outline {
     Outline()
     {}
@@ -54,6 +60,7 @@ public:
 
     cv::Mat getImage(Phase phase);
     ThresholdParams* getThresholdParams();
+    CannyParams* getCannyParams();
 
 signals:
     void preProcessDone(int phase);
@@ -75,10 +82,15 @@ public slots:
     void detectPips(int prev, QVector<cv::Mat>);
 
     void onThresholdParamChanged(int value);
+    void onCannyParamChanged(int value);
 
 private:
     cv::Mat m_stack[PhaseCount];
+
     ThresholdParams m_thresholdParams;
+    CannyParams m_cannyParams;
+
+    bool m_cannyEnabled;
 
     static QVector<Outline> collectOutlines(cv::Mat imageBin);
     static QVector<Face> collectFaces(QVector<Outline> outlines);
