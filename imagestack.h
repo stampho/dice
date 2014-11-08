@@ -50,6 +50,8 @@ public:
         Original,
         PreProcess,
         EdgeDetection,
+        RemovePips,
+        EdgeEnhancement,
         ContourDetection,
         FaceDetection,
         CubeDetection,
@@ -65,6 +67,8 @@ public:
 signals:
     void preProcessDone(int phase);
     void detectEdgesDone(int phase);
+    void enhanceEdgesDone(int phase);
+    void removePipsDone(int phase);
     void detectContoursDone(int phase, QVector<Outline>);
     void detectFacesDone(int phase, QVector<Face>);
     void detectCubesDone(int phase, QVector<Cube>);
@@ -75,6 +79,8 @@ signals:
 public slots:
     void preProcess();
     void detectEdges(int prev);
+    void enhanceEdges(int prev);
+    void removePips(int prev);
     void detectContours(int prev);
     void detectFaces(int prev, QVector<Outline>);
     void detectCubes(int prev, QVector<Face>);
