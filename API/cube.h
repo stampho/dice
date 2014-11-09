@@ -14,16 +14,17 @@ public:
     Face getTopFace() const;
 
     cv::Mat draw(cv::Mat image, cv::Scalar color = cv::Scalar(0, 0, 255), bool markCenter = true);
-    void printDetails();
+    void printDetails() const;
 
     static std::vector<Cube> collectCubes(std::vector<Face> faces, bool storePips = false);
 
 private:
     std::vector<Face> m_faces;
     bool m_storePips;
+    Face m_farthest;
 
     static std::vector<Face> getOppositeFaces(std::vector<Face> faces);
-    std::vector<Face> getTopPips(Face topPipFace) const;
+    std::vector<Face> getTopPips() const;
     Face getNearestPip(Face ref) const;
 };
 

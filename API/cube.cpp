@@ -26,7 +26,33 @@ bool Cube::hasPips() const
 
 void Cube::addFace(Face face)
 {
-    m_faces.push_back(face);
+    if (m_faces.empty()) {
+        m_farthest = face;
+        m_faces.push_back(face);
+        return;
+    }
+
+    int newY = face.getCenter().y;
+    int y;
+
+    int i = 0;
+    int size = m_faces.size();
+    for (; i < size; ++i) {
+        y = m_faces[i].getCenter().y;
+        if (y >= newY)
+            break;
+    }
+
+    if (i == size)
+        i--;
+    if (face.getDistance(m_faces[i]) <= 2.0)
+        return;
+    if (i+1 < size)
+        i++;
+    if (face.getDistance(m_faces[i]) <= 2.0)
+        return;
+
+    m_faces.insert(m_faces.begin() + i, face);
 }
 
 Mat Cube::draw(Mat image, Scalar color, bool markCenter)
@@ -36,8 +62,8 @@ Mat Cube::draw(Mat image, Scalar color, bool markCenter)
 
     // Mark the center of the farthest face
     if (markCenter) {
-        circle(image, m_faces[0].getCenter(), 2, Scalar(0, 0, 255), 2);
-        circle(image, m_faces[0].getCenter(), 8, Scalar(128, 128, 0), 4);
+        circle(image, m_farthest.getCenter(), 2, Scalar(0, 0, 255), 2);
+        circle(image, m_farthest.getCenter(), 8, Scalar(128, 128, 0), 4);
     }
 
     int num = m_faces.size();
@@ -47,68 +73,54 @@ Mat Cube::draw(Mat image, Scalar color, bool markCenter)
     return image;
 }
 
-void Cube::printDetails()
+void Cube::printDetails() const
 {
-    printf("cube's faces:");
     int num = m_faces.size();
+    fprintf(stderr, "cube's faces (%d):", num);
     for (int i = 0; i < num; ++i) {
-        printf(" (%d, %d)", m_faces[i].getCenter().x, m_faces[i].getCenter().y);
+        fprintf(stderr, " (%d, %d)", m_faces[i].getCenter().x, m_faces[i].getCenter().y);
     }
-    printf("\n");
+    fprintf(stderr, "\n");
 }
 
 Face Cube::getTopFace() const
 {
-    Face topFace = m_faces[0];
-    int y, minY = topFace.getCenter().y;
+    if (!hasPips())
+        return m_faces[0];
 
-    int num = m_faces.size();
-    // Skip first face here since topFace is already initialized with it
-    for (int i = 1; i < num; ++i) {
-        y = m_faces[i].getCenter().y;
-        if (y < minY) {
-            minY = y;
-            topFace = m_faces[i];
-        }
+    vector<Face> pipFaces = getTopPips();
+
+    std::vector<Point> pipPoints;
+    std::vector<Point> newPoints;
+    for (size_t i = 0; i < pipFaces.size(); ++i) {
+        newPoints = pipFaces[i].getVertices();
+        pipPoints.insert(pipPoints.end(), newPoints.begin(), newPoints.end());
+    }
+    RotatedRect rect = minAreaRect(Mat(pipPoints));
+
+    Point2f points[4];
+    rect.points(points);
+    int x, y;
+    vector<Point> result;
+    for (int i = 0; i < 4; ++i) {
+        x = round(points[i].x);
+        y = round(points[i].y);
+        result.push_back(Point(x, y));
     }
 
-    if (hasPips()) {
-        vector<Face> pipFaces = getTopPips(topFace);
-
-        std::vector<Point> pipPoints;
-        std::vector<Point> newPoints;
-        for (size_t i = 0; i < pipFaces.size(); ++i) {
-            newPoints = pipFaces[i].getVertices();
-            pipPoints.insert(pipPoints.end(), newPoints.begin(), newPoints.end());
-        }
-        RotatedRect rect = minAreaRect(Mat(pipPoints));
-
-        Point2f points[4];
-        rect.points(points);
-        int x, y;
-        vector<Point> result;
-        for (int i = 0; i < 4; ++i) {
-            x = round(points[i].x);
-            y = round(points[i].y);
-            result.push_back(Point(x, y));
-        }
-        topFace = Face(result);
-    }
-
-    return topFace;
+    return Face(result);
 }
 
-vector<Face> Cube::getTopPips(Face topPipFace) const
+vector<Face> Cube::getTopPips() const
 {
     vector<Face> pipFaces;
 
-    pipFaces.push_back(topPipFace);
+    int m = min(6, (int)m_faces.size());
+    for (int i = 0; i < m; ++i) {
+        pipFaces.push_back(m_faces[i]);
+    }
 
-    // TODO: implement algorithm for collecting top pips
-    Face pip2 = getNearestPip(topPipFace);
-    pipFaces.push_back(pip2);
-    Face pip3 = getNearestPip(pip2);
-    pipFaces.push_back(pip3);
+    //printDetails();
 
     return pipFaces;
 }
