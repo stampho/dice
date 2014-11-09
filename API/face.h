@@ -8,9 +8,9 @@ public:
     Face() { }
     Face(std::vector<cv::Point> vertices);
 
-    cv::Point getCenter();
-    cv::Point getTopVertex();
-    double getDistance(Face other);
+    cv::Point getCenter() const;
+    std::vector<cv::Point> getVertices() const;
+    double getDistance(Face other) const;
     cv::Mat crop(cv::Mat image);
 
     cv::Mat draw(cv::Mat image, cv::Scalar color = cv::Scalar(0, 0, 255), bool markCenter = true);

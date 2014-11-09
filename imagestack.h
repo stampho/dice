@@ -70,7 +70,7 @@ signals:
     void enhanceEdgesDone(int phase);
     void removePipsDone(int phase);
     void detectContoursDone(int phase, QVector<Outline>);
-    void detectFacesDone(int phase, QVector<Face>);
+    void detectFacesDone(int phase, QVector<Face>, bool);
     void detectCubesDone(int phase, QVector<Cube>);
     void detectTopsDone(int phase, QVector<cv::Mat>);
     void detectPipsDone(int phase, int result);
@@ -83,7 +83,7 @@ public slots:
     void removePips(int prev);
     void detectContours(int prev);
     void detectFaces(int prev, QVector<Outline>);
-    void detectCubes(int prev, QVector<Face>);
+    void detectCubes(int prev, QVector<Face>, bool);
     void detectTops(int prev, QVector<Cube>);
     void detectPips(int prev, QVector<cv::Mat>);
 

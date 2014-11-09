@@ -33,7 +33,7 @@ ImageStack::ImageStack(cv::Mat image, QObject* parent)
     connect(this, SIGNAL(removePipsDone(int)), this, SLOT(enhanceEdges(int)));
     connect(this, SIGNAL(enhanceEdgesDone(int)), this, SLOT(detectContours(int)));
     connect(this, SIGNAL(detectContoursDone(int, QVector<Outline>)), this, SLOT(detectFaces(int, QVector<Outline>)));
-    connect(this, SIGNAL(detectFacesDone(int, QVector<Face>)), this, SLOT(detectCubes(int, QVector<Face>)));
+    connect(this, SIGNAL(detectFacesDone(int, QVector<Face>, bool)), this, SLOT(detectCubes(int, QVector<Face>, bool)));
     connect(this, SIGNAL(detectCubesDone(int, QVector<Cube>)), this, SLOT(detectTops(int, QVector<Cube>)));
     connect(this, SIGNAL(detectTopsDone(int, QVector<cv::Mat>)), this, SLOT(detectPips(int, QVector<cv::Mat>)));
     connect(this, SIGNAL(detectPipsDone(int, int)), this, SIGNAL(ready(int, int)));
@@ -117,7 +117,7 @@ void ImageStack::removePips(int prev)
 void ImageStack::enhanceEdges(int prev)
 {
     Q_UNUSED(prev);
-
+    cv::Mat image = m_stack[RemovePips].clone();
 
     int size;
     int type = cv::MORPH_RECT;
@@ -170,25 +170,51 @@ void ImageStack::detectContours(int prev)
 void ImageStack::detectFaces(int prev, QVector<Outline> outlines)
 {
     Q_UNUSED(prev);
-
     cv::Mat image = m_stack[PreProcess].clone();
 
+    bool storePips;
+
     QVector<Face> faces = ImageStack::collectFaces(outlines);
-    for (int i = 0; i < faces.size(); ++i) {
-        Face face = faces.at(i);
-        image = face.draw(image);
+    if (faces.size() > 1) {
+        storePips = false;
+        for (int i = 0; i < faces.size(); ++i) {
+            Face face = faces.at(i);
+            image = face.draw(image);
+        }
+    } else {
+        storePips = true;
+        faces.clear();
+        cv::Canny(image, image, 127, 255, 3);
+        int size = 2;
+        cv::Mat element = cv::getStructuringElement(
+                cv::MORPH_RECT,
+                cv::Size(size, size),
+                cv::Point(size/2, size/2)
+        );
+        cv::dilate(image, image, element);
+        cv::erode(image, image, element);
+
+        m_stack[EdgeDetection] = image;
+
+        QVector<Pip> pips = ImageStack::collectPips(image);
+        for (int i = 0; i < pips.size(); ++i) {
+            Pip pip = pips.at(i);
+            Face pipFace = Face(pip);
+            faces.append(pipFace);
+            image = pipFace.draw(image);
+        }
     }
 
     m_stack[FaceDetection] = image;
-    Q_EMIT(detectFacesDone(FaceDetection, faces));
+    Q_EMIT(detectFacesDone(FaceDetection, faces, storePips));
 }
 
-void ImageStack::detectCubes(int prev, QVector<Face> faces)
+void ImageStack::detectCubes(int prev, QVector<Face> faces, bool storePips)
 {
     Q_UNUSED(prev);
     cv::Mat image = m_stack[PreProcess].clone();
 
-    QVector<Cube> cubes = QVector<Cube>::fromStdVector(Cube::collectCubes(faces.toStdVector()));
+    QVector<Cube> cubes = QVector<Cube>::fromStdVector(Cube::collectCubes(faces.toStdVector(), storePips));
     for (int i = 0; i < cubes.size(); ++i) {
         Cube cube = cubes.at(i);
         cv::Scalar color = (i%2) ? cv::Scalar(255, 0, 0) : cv::Scalar(0, 255, 255);

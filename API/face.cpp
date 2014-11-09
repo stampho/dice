@@ -11,30 +11,17 @@ using namespace std;
 Face::Face(vector<Point> vertices)
     : m_vertices(vertices)
 {
-    assert(vertices.size() == 4);
     m_center = calculateCenter();
 }
 
-Point Face::getCenter()
+Point Face::getCenter() const
 {
     return m_center;
 }
 
-Point Face::getTopVertex()
+vector<Point> Face::getVertices() const
 {
-    Point topVertex;
-    int y, minY = m_center.y;
-
-    int num = m_vertices.size();
-    for (int i = 0; i < num; ++i) {
-        y = m_vertices[i].y;
-        if (y < minY) {
-            minY = y;
-            topVertex = m_vertices[i];
-        }
-    }
-
-    return topVertex;
+    return m_vertices;
 }
 
 Mat Face::draw(Mat image, Scalar color, bool markCenter)
@@ -59,7 +46,7 @@ void Face::printDetails()
     printf("center: (%d, %d)\n", m_center.x, m_center.y);
 }
 
-double Face::getDistance(Face other)
+double Face::getDistance(Face other) const
 {
     return norm(m_center - other.getCenter());
 }
