@@ -43,13 +43,14 @@ void Cube::addFace(Face face)
             break;
     }
 
-    if (i == size)
-        i--;
-    if (face.getDistance(m_faces[i]) <= 2.0)
+    int j = i;
+    if (j == size)
+        j--;
+    if (face.getDistance(m_faces[j]) <= 2.0)
         return;
-    if (i+1 < size)
-        i++;
-    if (face.getDistance(m_faces[i]) <= 2.0)
+    if (j+1 < size)
+        j++;
+    if (face.getDistance(m_faces[j]) <= 2.0)
         return;
 
     m_faces.insert(m_faces.begin() + i, face);
