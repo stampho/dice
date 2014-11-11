@@ -86,7 +86,8 @@ void Cube::printDetails() const
 
 Face Cube::getTopFace() const
 {
-    if (!hasPips())
+    int size = (int)m_faces.size();
+    if (!hasPips() || size == 1)
         return m_faces[0];
 
     vector<Face> pipFaces = getTopPips();
@@ -117,35 +118,26 @@ vector<Face> Cube::getTopPips() const
     vector<Face> pipFaces;
     int size = (int)m_faces.size();
 
-#if 0
-    int m = min(6, size);
-    for (int i = 0; i < m; ++i) {
-        pipFaces.push_back(m_faces[i]);
-    }
-#endif
-
     const Face* top = &m_faces[0];
     const Face* bottom = &m_faces[size-1];
 
     pipFaces.push_back(m_faces[0]);
 
-    double dist1, dist2;
     Face curr;
-    for (int i = 1; i < 6; ++i) {
+    double maxDist = bottom->getDistance(m_faces[0]);
+    double dist1, dist2;
+    int m = min(6, size);
+    for (int i = 1; i < m; ++i) {
         curr = m_faces[i];
         dist1 = top->getDistance(curr);
         dist2 = bottom->getDistance(curr);
 
-        //fprintf(stderr, "[%d] %f <-> %f\n", i, dist1, dist2);
-
-        if (dist1 < dist2) {
-            fprintf(stderr, "[%d] (%d, %d)\n", i, m_faces[i].getCenter().x, m_faces[i].getCenter().y);
+        if (dist1 < dist2 && (float)curr.getCenter().y < top->getCenter().y + maxDist / 2.5) {
+            //fprintf(stderr, "[%d] (%d, %d)\n", i, m_faces[i].getCenter().x, m_faces[i].getCenter().y);
             pipFaces.push_back(curr);
         }
     }
-    fprintf(stderr, "\n");
 
-    //printDetails();
     return pipFaces;
 }
 
