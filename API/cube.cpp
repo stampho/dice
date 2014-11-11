@@ -1,6 +1,7 @@
 #include "cube.h"
 #include "face.h"
 
+#include <numeric>
 #include <stdio.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -118,6 +119,20 @@ vector<Face> Cube::getTopPips() const
     vector<Face> pipFaces;
     int size = (int)m_faces.size();
 
+    vector<double> dists;
+    Face ref;
+    double dist;
+    for (int i = 0; i < size - 1; ++i) {
+        ref = m_faces[i];
+        for (int j = i + 1; j < size; ++j) {
+            dist = ref.getDistance(m_faces[j]);
+            dists.push_back(dist);
+        }
+    }
+
+    double sum = std::accumulate(dists.begin(), dists.end(), 0.0);
+    double mean = sum / dists.size();
+
     const Face* top = &m_faces[0];
     const Face* bottom = &m_faces[size-1];
 
@@ -132,8 +147,7 @@ vector<Face> Cube::getTopPips() const
         dist1 = top->getDistance(curr);
         dist2 = bottom->getDistance(curr);
 
-        if (dist1 < dist2 && (float)curr.getCenter().y < top->getCenter().y + maxDist / 2.5) {
-            //fprintf(stderr, "[%d] (%d, %d)\n", i, m_faces[i].getCenter().x, m_faces[i].getCenter().y);
+        if (dist1 < dist2 && (float)curr.getCenter().y < top->getCenter().y + maxDist - mean) {
             pipFaces.push_back(curr);
         }
     }
