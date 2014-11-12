@@ -106,9 +106,9 @@ void ImageStack::removePips(int prev)
 
     QVector<Pip> pips = ImageStack::collectPips(imageBin);
     for (int i = 0; i < pips.size(); ++i) {
-        cv::fillConvexPoly(imageBin, pips.at(i), cv::Scalar(0, 0, 0), 8, 0);
+        cv::fillConvexPoly(imageBin, pips.at(i), cv::Scalar(0), 8, 0);
     }
-    cv::polylines(imageBin, pips.toStdVector(), true, cv::Scalar(0, 0, 0), 3, CV_AA);
+    cv::polylines(imageBin, pips.toStdVector(), true, cv::Scalar(0), 3, CV_AA);
     m_stack[RemovePips] = imageBin;
 
     Q_EMIT(removePipsDone(RemovePips));
@@ -194,15 +194,18 @@ void ImageStack::detectFaces(int prev, QVector<Outline> outlines)
         cv::dilate(image, image, element);
         cv::erode(image, image, element);
 
-        m_stack[EdgeDetection] = image;
-
         QVector<Pip> pips = ImageStack::collectPips(image);
         for (int i = 0; i < pips.size(); ++i) {
             Pip pip = pips.at(i);
+            cv::fillConvexPoly(image, pip, cv::Scalar(255), 8, 0);
             Face pipFace = Face(pip);
             faces.append(pipFace);
-            image = pipFace.draw(image);
         }
+        cv::polylines(image, pips.toStdVector(), true, cv::Scalar(0), 2, CV_AA);
+        m_stack[EdgeDetection] = image;
+
+        for (int i = 0; i < faces.size(); ++i)
+            image = faces[i].draw(image);
     }
 
     m_stack[FaceDetection] = image;
@@ -237,7 +240,17 @@ void ImageStack::detectTops(int prev, QVector<Cube> cubes)
         Cube cube = cubes.at(i);
         Face topFace = cube.getTopFace();
 
-        cv::Mat croppedFace = topFace.crop(imageBin);
+        cv::Mat temp = imageBin.clone();
+        if (!cube.hasPips()) {
+            QVector<Pip> pips = ImageStack::collectPips(temp);
+            for (int i = 0; i < pips.size(); ++i) {
+                Pip pip = pips.at(i);
+                cv::fillConvexPoly(temp, pip, cv::Scalar(255), 8, 0);
+            }
+            //cv::polylines(temp, pips.toStdVector(), true, cv::Scalar(255), 1, CV_AA);
+        }
+
+        cv::Mat croppedFace = topFace.crop(temp);
         topFaces.append(croppedFace);
 
         cv::bitwise_xor(image, croppedFace, image);
