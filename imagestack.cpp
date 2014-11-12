@@ -240,17 +240,7 @@ void ImageStack::detectTops(int prev, QVector<Cube> cubes)
         Cube cube = cubes.at(i);
         Face topFace = cube.getTopFace();
 
-        cv::Mat temp = imageBin.clone();
-        if (!cube.hasPips()) {
-            QVector<Pip> pips = ImageStack::collectPips(temp);
-            for (int i = 0; i < pips.size(); ++i) {
-                Pip pip = pips.at(i);
-                cv::fillConvexPoly(temp, pip, cv::Scalar(255), 8, 0);
-            }
-            //cv::polylines(temp, pips.toStdVector(), true, cv::Scalar(255), 1, CV_AA);
-        }
-
-        cv::Mat croppedFace = topFace.crop(temp);
+        cv::Mat croppedFace = topFace.crop(imageBin);
         topFaces.append(croppedFace);
 
         cv::bitwise_xor(image, croppedFace, image);
@@ -271,6 +261,8 @@ void ImageStack::detectPips(int prev, QVector<cv::Mat> topFaces)
         QVector<Pip> pipsOfTopFace = ImageStack::collectPips(topFace);
         pips += pipsOfTopFace;
     }
+
+    fprintf(stderr, "RESULT: %d\n", pips.size());
 
     m_stack[PipDetection] = ImageStack::drawPips(image, pips);
     Q_EMIT(detectPipsDone(PipDetection, pips.size()));
@@ -378,8 +370,27 @@ QVector<Pip> ImageStack::collectPips(Mat image)
         if (fabs(contourArea(contours[i])) < 100 || !isContourConvex(approx))
             continue;
 
-        if (approx.size() >= 7)
+        if (approx.size() >= 7) {
+            Moments m = moments(approx, true);
+            Point center(m.m10/m.m00, m.m01/m.m00);
+            bool inside = false;
+            int j = 0;
+            for (; j < pips.size(); ++j) {
+                if (pointPolygonTest(pips[j], center, true) > 0) {
+                    inside = true;
+                    break;
+                }
+            }
+
+            if (inside) {
+                if (contourArea(approx) > contourArea(pips[j]))
+                    pips.remove(j);
+                else
+                    continue;
+            }
+
             pips.append(approx);
+        }
     }
 
     return pips;
