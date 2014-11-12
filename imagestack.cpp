@@ -28,23 +28,6 @@ ImageStack::ImageStack(cv::Mat image, QObject* parent)
 {
     m_stack[Original] = image;
 
-    connect(this, SIGNAL(preProcessDone(int)), this, SLOT(detectEdges(int)));
-    connect(this, SIGNAL(detectEdgesDone(int)), this, SLOT(removePips(int)));
-    connect(this, SIGNAL(removePipsDone(int)), this, SLOT(enhanceEdges(int)));
-    connect(this, SIGNAL(enhanceEdgesDone(int)), this, SLOT(detectContours(int)));
-    connect(this, SIGNAL(detectContoursDone(int, QVector<Outline>)), this, SLOT(detectFaces(int, QVector<Outline>)));
-    connect(this, SIGNAL(detectFacesDone(int, QVector<Face>, bool)), this, SLOT(detectCubes(int, QVector<Face>, bool)));
-    connect(this, SIGNAL(detectCubesDone(int, QVector<Cube>)), this, SLOT(detectTops(int, QVector<Cube>)));
-    connect(this, SIGNAL(detectTopsDone(int, QVector<cv::Mat>)), this, SLOT(detectPips(int, QVector<cv::Mat>)));
-    connect(this, SIGNAL(detectPipsDone(int, int)), this, SIGNAL(ready(int, int)));
-}
-
-ImageStack::~ImageStack()
-{
-}
-
-void ImageStack::init()
-{
     m_cannyEnabled = true;
 
     m_thresholdParams.thresh = 127;
@@ -55,7 +38,19 @@ void ImageStack::init()
     m_cannyParams.ratio = 3;
     m_cannyParams.kernelSize = 3;
 
-    preProcess();
+    connect(this, SIGNAL(preProcessDone()), this, SLOT(detectEdges()));
+    connect(this, SIGNAL(detectEdgesDone()), this, SLOT(removePips()));
+    connect(this, SIGNAL(removePipsDone()), this, SLOT(enhanceEdges()));
+    connect(this, SIGNAL(enhanceEdgesDone()), this, SLOT(detectContours()));
+    connect(this, SIGNAL(detectContoursDone(QVector<Outline>)), this, SLOT(detectFaces(QVector<Outline>)));
+    connect(this, SIGNAL(detectFacesDone(QVector<Face>, bool)), this, SLOT(detectCubes(QVector<Face>, bool)));
+    connect(this, SIGNAL(detectCubesDone(QVector<Cube>)), this, SLOT(detectTops(QVector<Cube>)));
+    connect(this, SIGNAL(detectTopsDone(QVector<cv::Mat>)), this, SLOT(detectPips(QVector<cv::Mat>)));
+    connect(this, SIGNAL(detectPipsDone(int)), this, SLOT(onReady(int)));
+}
+
+ImageStack::~ImageStack()
+{
 }
 
 cv::Mat ImageStack::getImage(Phase phase)
@@ -81,14 +76,12 @@ void ImageStack::preProcess()
     //cv::equalizeHist(image, image);
 
     m_stack[PreProcess] = image;
-    Q_EMIT(preProcessDone(PreProcess));
+    Q_EMIT(preProcessDone());
 }
 
-void ImageStack::detectEdges(int prev)
+void ImageStack::detectEdges()
 {
-    Q_UNUSED(prev);
     cv::Mat image = m_stack[PreProcess].clone();
-    cv::Mat imageGray = m_stack[PreProcess].clone();
 
     if (m_cannyEnabled)
         cv::Canny(image, image, m_cannyParams.lowThreshold, m_cannyParams.lowThreshold*m_cannyParams.ratio, m_cannyParams.kernelSize);
@@ -96,12 +89,11 @@ void ImageStack::detectEdges(int prev)
         cv::threshold(image, image, m_thresholdParams.thresh, m_thresholdParams.maxval, m_thresholdParams.type);
 
     m_stack[EdgeDetection] = image;
-    Q_EMIT(detectEdgesDone(EdgeDetection));
+    Q_EMIT(detectEdgesDone());
 }
 
-void ImageStack::removePips(int prev)
+void ImageStack::removePips()
 {
-    Q_UNUSED(prev);
     cv::Mat imageBin = m_stack[EdgeDetection].clone();
 
     QVector<Pip> pips = ImageStack::collectPips(imageBin);
@@ -111,12 +103,11 @@ void ImageStack::removePips(int prev)
     cv::polylines(imageBin, pips.toStdVector(), true, cv::Scalar(0), 3, CV_AA);
     m_stack[RemovePips] = imageBin;
 
-    Q_EMIT(removePipsDone(RemovePips));
+    Q_EMIT(removePipsDone());
 }
 
-void ImageStack::enhanceEdges(int prev)
+void ImageStack::enhanceEdges()
 {
-    Q_UNUSED(prev);
     cv::Mat image = m_stack[RemovePips].clone();
 
     int size;
@@ -144,12 +135,11 @@ void ImageStack::enhanceEdges(int prev)
     cv::threshold(image, image, 1, 255, cv::THRESH_BINARY);
 
     m_stack[EdgeEnhancement] = image;
-    Q_EMIT(enhanceEdgesDone(EdgeEnhancement));
+    Q_EMIT(enhanceEdgesDone());
 }
 
-void ImageStack::detectContours(int prev)
+void ImageStack::detectContours()
 {
-    Q_UNUSED(prev);
     cv::Mat image = m_stack[PreProcess].clone();
     cv::Mat imageBin = m_stack[EdgeEnhancement];
 
@@ -163,13 +153,12 @@ void ImageStack::detectContours(int prev)
     }
 
     m_stack[ContourDetection] = image;
-    Q_EMIT(detectContoursDone(ContourDetection, outlines));
+    Q_EMIT(detectContoursDone(outlines));
 }
 
 
-void ImageStack::detectFaces(int prev, QVector<Outline> outlines)
+void ImageStack::detectFaces(QVector<Outline> outlines)
 {
-    Q_UNUSED(prev);
     cv::Mat image = m_stack[PreProcess].clone();
 
     bool storePips;
@@ -209,12 +198,11 @@ void ImageStack::detectFaces(int prev, QVector<Outline> outlines)
     }
 
     m_stack[FaceDetection] = image;
-    Q_EMIT(detectFacesDone(FaceDetection, faces, storePips));
+    Q_EMIT(detectFacesDone(faces, storePips));
 }
 
-void ImageStack::detectCubes(int prev, QVector<Face> faces, bool storePips)
+void ImageStack::detectCubes(QVector<Face> faces, bool storePips)
 {
-    Q_UNUSED(prev);
     cv::Mat image = m_stack[PreProcess].clone();
 
     QVector<Cube> cubes = QVector<Cube>::fromStdVector(Cube::collectCubes(faces.toStdVector(), storePips));
@@ -225,12 +213,11 @@ void ImageStack::detectCubes(int prev, QVector<Face> faces, bool storePips)
     }
 
     m_stack[CubeDetection] = image;
-    Q_EMIT(detectCubesDone(CubeDetection, cubes));
+    Q_EMIT(detectCubesDone(cubes));
 }
 
-void ImageStack::detectTops(int prev, QVector<Cube> cubes)
+void ImageStack::detectTops(QVector<Cube> cubes)
 {
-    Q_UNUSED(prev);
     cv::Mat imageBin = m_stack[EdgeDetection].clone();
     cv::Mat image = cv::Mat::zeros(imageBin.rows, imageBin.cols, CV_8UC1);
     image.setTo(cv::Scalar(255));
@@ -247,12 +234,11 @@ void ImageStack::detectTops(int prev, QVector<Cube> cubes)
     }
 
     m_stack[TopDetection] = image;
-    Q_EMIT(detectTopsDone(TopDetection, topFaces));
+    Q_EMIT(detectTopsDone(topFaces));
 }
 
-void ImageStack::detectPips(int prev, QVector<cv::Mat> topFaces)
+void ImageStack::detectPips(QVector<cv::Mat> topFaces)
 {
-    Q_UNUSED(prev);
     cv::Mat image = m_stack[PreProcess].clone();
 
     QVector<Pip> pips;
@@ -272,10 +258,14 @@ void ImageStack::detectPips(int prev, QVector<cv::Mat> topFaces)
         pips += pipsOfTopFace;
     }
 
-    fprintf(stderr, "RESULT: %d\n", pips.size());
-
     m_stack[PipDetection] = ImageStack::drawPips(image, pips);
-    Q_EMIT(detectPipsDone(PipDetection, pips.size()));
+    Q_EMIT(detectPipsDone(pips.size()));
+}
+
+void ImageStack::onReady(int result)
+{
+    qDebug("RESULT: %d", result);
+    Q_EMIT(ready());
 }
 
 void ImageStack::onThresholdParamChanged(int value)
@@ -292,7 +282,7 @@ void ImageStack::onThresholdParamChanged(int value)
     else if (id.compare("threshTypeGroup") == 0)
         m_thresholdParams.type = value;
 
-    detectEdges(PreProcess);
+    detectEdges();
 }
 
 void ImageStack::onCannyParamChanged(int value)
@@ -309,7 +299,7 @@ void ImageStack::onCannyParamChanged(int value)
     else if (id.compare("kernelSizeSlider") == 0)
         m_cannyParams.kernelSize = value;
 
-    detectEdges(PreProcess);
+    detectEdges();
 }
 
 
@@ -404,7 +394,6 @@ QVector<Pip> ImageStack::collectPips(Mat image)
     }
 
     return pips;
-
 }
 
 Mat ImageStack::drawPips(Mat image, QVector<Pip> pips, Scalar color)

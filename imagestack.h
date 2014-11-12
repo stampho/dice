@@ -44,8 +44,6 @@ public:
     ImageStack(cv::Mat image, QObject* parent = 0);
     ~ImageStack();
 
-    void init();
-
     enum Phase {
         Original,
         PreProcess,
@@ -65,27 +63,30 @@ public:
     CannyParams* getCannyParams();
 
 signals:
-    void preProcessDone(int phase);
-    void detectEdgesDone(int phase);
-    void enhanceEdgesDone(int phase);
-    void removePipsDone(int phase);
-    void detectContoursDone(int phase, QVector<Outline>);
-    void detectFacesDone(int phase, QVector<Face>, bool);
-    void detectCubesDone(int phase, QVector<Cube>);
-    void detectTopsDone(int phase, QVector<cv::Mat>);
-    void detectPipsDone(int phase, int result);
-    void ready(int phase, int result);
+    void preProcessDone();
+    void detectEdgesDone();
+    void enhanceEdgesDone();
+    void removePipsDone();
+    void detectContoursDone(QVector<Outline>);
+    void detectFacesDone(QVector<Face>, bool);
+    void detectCubesDone(QVector<Cube>);
+    void detectTopsDone(QVector<cv::Mat>);
+    void detectPipsDone(int result);
+
+    void ready();
 
 public slots:
     void preProcess();
-    void detectEdges(int prev);
-    void enhanceEdges(int prev);
-    void removePips(int prev);
-    void detectContours(int prev);
-    void detectFaces(int prev, QVector<Outline>);
-    void detectCubes(int prev, QVector<Face>, bool);
-    void detectTops(int prev, QVector<Cube>);
-    void detectPips(int prev, QVector<cv::Mat>);
+    void detectEdges();
+    void enhanceEdges();
+    void removePips();
+    void detectContours();
+    void detectFaces(QVector<Outline>);
+    void detectCubes(QVector<Face>, bool);
+    void detectTops(QVector<Cube>);
+    void detectPips(QVector<cv::Mat>);
+
+    void onReady(int result);
 
     void onThresholdParamChanged(int value);
     void onCannyParamChanged(int value);

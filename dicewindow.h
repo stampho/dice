@@ -26,8 +26,7 @@ public:
 
 public slots:
     void initImageStack(cv::Mat matImage);
-    void showImageStack(int phase, int result);
-    void initControllers(int phase, int result);
+    void showImageStack();
     void onThreshChanged(int value);
     void onCannyChanged(int value);
 
@@ -35,6 +34,8 @@ private:
     Ui::DiceWindow* m_ui;
     ImageStack* m_imageStack;
     QVector<QLabel*> m_images;
+
+    void initControllers();
 };
 
 #endif // DICESWINDOW_H

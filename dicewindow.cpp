@@ -87,30 +87,34 @@ void DiceWindow::initImageStack(cv::Mat matImage) {
 
     m_imageStack = new ImageStack(matImage);
 
-    connect(m_imageStack, SIGNAL(ready(int, int)), this, SLOT(showImageStack(int, int)));
-    connect(m_imageStack, SIGNAL(ready(int, int)), this, SLOT(initControllers(int, int)));
+    connect(m_imageStack, SIGNAL(ready()), this, SLOT(showImageStack()));
 
-    connect(m_ui->threshSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
+    // Bind controller events to the UI
     connect(m_ui->threshSlider, SIGNAL(valueChanged(int)), this, SLOT(onThreshChanged(int)));
-    connect(m_ui->maxvalSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
     connect(m_ui->maxvalSlider, SIGNAL(valueChanged(int)), this, SLOT(onThreshChanged(int)));
+
+    connect(m_ui->lowThresholdSlider, SIGNAL(valueChanged(int)), this, SLOT(onCannyChanged(int)));
+    connect(m_ui->ratioSlider, SIGNAL(valueChanged(int)), this, SLOT(onCannyChanged(int)));
+    connect(m_ui->kernelSizeSlider, SIGNAL(valueChanged(int)), this, SLOT(onCannyChanged(int)));
+
+    // Initialize controllers
+    initControllers();
+
+    // Start processing of the image
+    m_imageStack->preProcess();
+
+    // Bind controller events to the ImageStack
+    connect(m_ui->threshSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
+    connect(m_ui->maxvalSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
     connect(m_ui->threshTypeGroup, SIGNAL(buttonPressed(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
 
     connect(m_ui->lowThresholdSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onCannyParamChanged(int)));
-    connect(m_ui->lowThresholdSlider, SIGNAL(valueChanged(int)), this, SLOT(onCannyChanged(int)));
     connect(m_ui->ratioSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onCannyParamChanged(int)));
-    connect(m_ui->ratioSlider, SIGNAL(valueChanged(int)), this, SLOT(onCannyChanged(int)));
     connect(m_ui->kernelSizeSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onCannyParamChanged(int)));
-    connect(m_ui->kernelSizeSlider, SIGNAL(valueChanged(int)), this, SLOT(onCannyChanged(int)));
-
-    m_imageStack->init();
 }
 
-void DiceWindow::showImageStack(int phase, int result)
+void DiceWindow::showImageStack()
 {
-    Q_UNUSED(phase);
-    Q_UNUSED(result);
-
     for (int i = 0; i < m_images.size(); ++i) {
         QImage qimage = Mat2QImage(m_imageStack->getImage((ImageStack::Phase)i));
         QPixmap pixmap = QPixmap::fromImage(qimage);
@@ -120,11 +124,8 @@ void DiceWindow::showImageStack(int phase, int result)
     }
 }
 
-void DiceWindow::initControllers(int phase, int result)
+void DiceWindow::initControllers()
 {
-    Q_UNUSED(phase);
-    Q_UNUSED(result);
-
     {
         ThresholdParams* params = m_imageStack->getThresholdParams();
         m_ui->threshDisplay->setText(QString::number(params->thresh));
@@ -142,7 +143,6 @@ void DiceWindow::initControllers(int phase, int result)
         m_ui->lowThresholdSlider->setSliderPosition(params->lowThreshold);
         m_ui->ratioSlider->setSliderPosition(params->ratio);
         m_ui->kernelSizeSlider->setSliderPosition(params->kernelSize);
-
     }
 }
 
