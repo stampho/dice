@@ -9,6 +9,15 @@
 
 class ImageExplorer;
 
+
+struct ImageInfo {
+    QString path;
+    int cols;
+    int rows;
+    int channels;
+    QString depth;
+};
+
 class ImageLoader : public QObject
 {
     Q_OBJECT
@@ -18,8 +27,10 @@ public:
 
     cv::Mat get();
 
+    ImageInfo* getInfo();
+
 signals:
-    void loaded(cv::Mat dimage);
+    void loaded(cv::Mat);
 
 public slots:
     void load(QString path);
@@ -28,6 +39,9 @@ public slots:
 private:
     ImageExplorer* m_explorer;
     cv::Mat m_matImage;
+    ImageInfo* m_info;
+
+    void updateInfo(QString path);
 };
 
 #endif // IMAGELOADER_H

@@ -73,7 +73,7 @@ signals:
     void detectTopsDone(QVector<cv::Mat>);
     void detectPipsDone(int result);
 
-    void ready();
+    void ready(int result);
 
 public slots:
     void preProcess();
@@ -85,8 +85,6 @@ public slots:
     void detectCubes(QVector<Face>, bool);
     void detectTops(QVector<Cube>);
     void detectPips(QVector<cv::Mat>);
-
-    void onReady(int result);
 
     void onThresholdParamChanged(int value);
     void onCannyParamChanged(int value);

@@ -68,6 +68,7 @@ DiceWindow::DiceWindow(QWidget* parent)
 
     ImageExplorer* imageExplorer = new ImageExplorer(m_ui);
     ImageLoader* imageLoader = new ImageLoader(imageExplorer);
+    m_imageInfo = imageLoader->getInfo();
 
     connect(m_ui->dirBrowser, SIGNAL(clicked(QModelIndex)), imageExplorer, SLOT(dirSelected(QModelIndex)));
     connect(m_ui->fileBrowser, SIGNAL(clicked(QModelIndex)), imageLoader, SLOT(load(QModelIndex)));
@@ -87,7 +88,7 @@ void DiceWindow::initImageStack(cv::Mat matImage) {
 
     m_imageStack = new ImageStack(matImage);
 
-    connect(m_imageStack, SIGNAL(ready()), this, SLOT(showImageStack()));
+    connect(m_imageStack, SIGNAL(ready(int)), this, SLOT(showImageStack(int)));
 
     // Bind controller events to the UI
     connect(m_ui->threshSlider, SIGNAL(valueChanged(int)), this, SLOT(onThreshChanged(int)));
@@ -113,8 +114,10 @@ void DiceWindow::initImageStack(cv::Mat matImage) {
     connect(m_ui->kernelSizeSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onCannyParamChanged(int)));
 }
 
-void DiceWindow::showImageStack()
+void DiceWindow::showImageStack(int result)
 {
+    updateInfo(result);
+
     for (int i = 0; i < m_images.size(); ++i) {
         QImage qimage = Mat2QImage(m_imageStack->getImage((ImageStack::Phase)i));
         QPixmap pixmap = QPixmap::fromImage(qimage);
@@ -122,6 +125,15 @@ void DiceWindow::showImageStack()
         label->setPixmap(pixmap);
         label->setFixedSize(pixmap.size());
     }
+}
+
+void DiceWindow::updateInfo(int result)
+{
+    m_ui->pathLabel->setText(m_imageInfo->path);
+    m_ui->sizeLabel->setText(QString("%1x%2").arg(m_imageInfo->cols).arg(m_imageInfo->rows));
+    m_ui->channelsLabel->setText(QString::number(m_imageInfo->channels));
+    m_ui->depthLabel->setText(m_imageInfo->depth);
+    m_ui->resultLabel->setText(QString("<span style=\"color: red; font-weight: bold\">%1</span>").arg(result));
 }
 
 void DiceWindow::initControllers()

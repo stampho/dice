@@ -11,6 +11,8 @@
 
 
 class ImageStack;
+class ImageInfo;
+
 
 namespace Ui {
 class DiceWindow;
@@ -26,16 +28,18 @@ public:
 
 public slots:
     void initImageStack(cv::Mat matImage);
-    void showImageStack();
+    void showImageStack(int result);
     void onThreshChanged(int value);
     void onCannyChanged(int value);
 
 private:
     Ui::DiceWindow* m_ui;
     ImageStack* m_imageStack;
+    ImageInfo* m_imageInfo;
     QVector<QLabel*> m_images;
 
     void initControllers();
+    void updateInfo(int result);
 };
 
 #endif // DICESWINDOW_H

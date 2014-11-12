@@ -46,7 +46,7 @@ ImageStack::ImageStack(cv::Mat image, QObject* parent)
     connect(this, SIGNAL(detectFacesDone(QVector<Face>, bool)), this, SLOT(detectCubes(QVector<Face>, bool)));
     connect(this, SIGNAL(detectCubesDone(QVector<Cube>)), this, SLOT(detectTops(QVector<Cube>)));
     connect(this, SIGNAL(detectTopsDone(QVector<cv::Mat>)), this, SLOT(detectPips(QVector<cv::Mat>)));
-    connect(this, SIGNAL(detectPipsDone(int)), this, SLOT(onReady(int)));
+    connect(this, SIGNAL(detectPipsDone(int)), this, SIGNAL(ready(int)));
 }
 
 ImageStack::~ImageStack()
@@ -260,12 +260,6 @@ void ImageStack::detectPips(QVector<cv::Mat> topFaces)
 
     m_stack[PipDetection] = ImageStack::drawPips(image, pips);
     Q_EMIT(detectPipsDone(pips.size()));
-}
-
-void ImageStack::onReady(int result)
-{
-    qDebug("RESULT: %d", result);
-    Q_EMIT(ready());
 }
 
 void ImageStack::onThresholdParamChanged(int value)
