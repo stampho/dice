@@ -259,6 +259,16 @@ void ImageStack::detectPips(int prev, QVector<cv::Mat> topFaces)
     for (int i = 0; i < topFaces.size(); ++i) {
         cv::Mat topFace = topFaces.at(i);
         QVector<Pip> pipsOfTopFace = ImageStack::collectPips(topFace);
+        if (pipsOfTopFace.size() == 0) {
+            int size = 3;
+            cv::Mat element = cv::getStructuringElement(
+                    cv::MORPH_RECT,
+                    cv::Size(size, size),
+                    cv::Point(size/2, size/2)
+            );
+            cv::dilate(topFace, topFace, element);
+            pipsOfTopFace = ImageStack::collectPips(topFace);
+        }
         pips += pipsOfTopFace;
     }
 

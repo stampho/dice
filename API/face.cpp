@@ -55,11 +55,10 @@ Mat Face::crop(Mat image)
 {
     Mat mask = Mat::zeros(image.rows, image.cols, CV_8UC1);
     drawContours(mask, vector<vector<Point> >(1, m_vertices), -1, Scalar(255), CV_FILLED);
+    polylines(mask, vector<vector<Point> >(1, m_vertices), true, Scalar(255), 3, CV_AA);
 
     Mat crop = Mat::zeros(image.rows, image.cols, CV_8UC1);
-    crop.setTo(Scalar(255));
     image.copyTo(crop, mask);
-    normalize(mask.clone(), mask, 0.0, 255.0, CV_MINMAX, CV_8UC1);
 
     return crop;
 }
