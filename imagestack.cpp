@@ -38,6 +38,14 @@ ImageStack::ImageStack(cv::Mat image, QObject* parent)
     m_cannyParams.ratio = 3;
     m_cannyParams.kernelSize = 3;
 
+    m_edgeParams.dilateSize = 5;
+    m_edgeParams.dilateType = cv::MORPH_RECT;
+    m_edgeParams.dilateBlur = 0;
+    m_edgeParams.erodeSize = 5;
+    m_edgeParams.erodeType = cv::MORPH_RECT;
+    m_edgeParams.erodeBlur = 3;
+    m_edgeParams.thresholdType = cv::THRESH_BINARY;
+
     connect(this, SIGNAL(preProcessDone()), this, SLOT(detectEdges()));
     connect(this, SIGNAL(detectEdgesDone()), this, SLOT(removePips()));
     connect(this, SIGNAL(removePipsDone()), this, SLOT(enhanceEdges()));
@@ -66,6 +74,11 @@ ThresholdParams* ImageStack::getThresholdParams()
 CannyParams* ImageStack::getCannyParams()
 {
     return &m_cannyParams;
+}
+
+EdgeParams* ImageStack::getEdgeParams()
+{
+    return &m_edgeParams;
 }
 
 void ImageStack::preProcess()
@@ -110,29 +123,44 @@ void ImageStack::enhanceEdges()
 {
     cv::Mat image = m_stack[RemovePips].clone();
 
-    int size;
-    int type = cv::MORPH_RECT;
+    int size, type;
+    //int type = cv::MORPH_RECT;
     //int type = cv::MORPH_CROSS;
     //int type = cv::MORPH_ELLIPSE;
 
-    size = 5;
-    cv::Mat element = cv::getStructuringElement(
-            type,
-            cv::Size(size, size),
-            cv::Point(size/2, size/2)
-    );
-    cv::dilate(image, image, element);
-    //cv::blur(image, image, cv::Size(3, 3), cv::Point(-1, -1));
+    size = m_edgeParams.dilateSize;
+    type = m_edgeParams.dilateType;
+    if (size) {
+        cv::Mat element = cv::getStructuringElement(
+                type,
+                cv::Size(size, size),
+                cv::Point(size/2, size/2)
+        );
+        cv::dilate(image, image, element);
+    }
 
-    size = 5;
-    cv::Mat element2 = cv::getStructuringElement(
-            type,
-            cv::Size(size, size),
-            cv::Point(size/2, size/2)
-    );
-    cv::erode(image, image, element2);
-    cv::blur(image, image, cv::Size(3, 3), cv::Point(-1, -1));
-    cv::threshold(image, image, 1, 255, cv::THRESH_BINARY);
+    size = m_edgeParams.dilateBlur;
+    if (size)
+        cv::blur(image, image, cv::Size(size, size), cv::Point(-1, -1));
+
+    size = m_edgeParams.erodeSize;
+    type = m_edgeParams.erodeType;
+    if (size) {
+        cv::Mat element = cv::getStructuringElement(
+                type,
+                cv::Size(size, size),
+                cv::Point(size/2, size/2)
+        );
+        cv::erode(image, image, element);
+    }
+
+    size = m_edgeParams.erodeBlur;
+    if (size)
+        cv::blur(image, image, cv::Size(size, size), cv::Point(-1, -1));
+
+    type = m_edgeParams.thresholdType;
+    if (type >= 0)
+        cv::threshold(image, image, 1, 255, type);
 
     m_stack[EdgeEnhancement] = image;
     Q_EMIT(enhanceEdgesDone());
@@ -296,6 +324,28 @@ void ImageStack::onCannyParamChanged(int value)
     detectEdges();
 }
 
+void ImageStack::onEdgeParamChanged(int value)
+{
+    QObject* sender = QObject::sender();
+    QString id = sender->objectName();
+
+    if (id.compare("dilateSizeSlider") == 0)
+        m_edgeParams.dilateSize = value;
+    else if(id.compare("dilateTypeGroup") == 0)
+        m_edgeParams.dilateType = value;
+    else if(id.compare("dilateBlurSlider") == 0)
+        m_edgeParams.dilateBlur = value;
+    else if(id.compare("erodeSizeSlider") == 0)
+        m_edgeParams.erodeSize = value;
+    else if(id.compare("erodeTypeGroup") == 0)
+        m_edgeParams.erodeType = value;
+    else if(id.compare("erodeBlurSlider") == 0)
+        m_edgeParams.erodeBlur = value;
+    else if(id.compare("ethreshTypeGroup") == 0)
+        m_edgeParams.thresholdType = value;
+
+    enhanceEdges();
+}
 
 using namespace cv;
 

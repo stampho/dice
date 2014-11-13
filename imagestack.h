@@ -23,6 +23,18 @@ struct CannyParams {
     int kernelSize;
 };
 
+struct EdgeParams {
+    int dilateSize;
+    int dilateType;
+    int dilateBlur;
+
+    int erodeSize;
+    int erodeType;
+    int erodeBlur;
+
+    int thresholdType;
+};
+
 struct Outline {
     Outline()
     {}
@@ -61,6 +73,7 @@ public:
     cv::Mat getImage(Phase phase);
     ThresholdParams* getThresholdParams();
     CannyParams* getCannyParams();
+    EdgeParams* getEdgeParams();
 
 signals:
     void preProcessDone();
@@ -88,12 +101,14 @@ public slots:
 
     void onThresholdParamChanged(int value);
     void onCannyParamChanged(int value);
+    void onEdgeParamChanged(int value);
 
 private:
     cv::Mat m_stack[PhaseCount];
 
     ThresholdParams m_thresholdParams;
     CannyParams m_cannyParams;
+    EdgeParams m_edgeParams;
 
     bool m_cannyEnabled;
 

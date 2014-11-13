@@ -66,6 +66,21 @@ DiceWindow::DiceWindow(QWidget* parent)
     m_ui->threshTypeGroup->setId(m_ui->tozeroButton, cv::THRESH_TOZERO);
     m_ui->threshTypeGroup->setId(m_ui->tozeroinvButton, cv::THRESH_TOZERO_INV);
 
+    m_ui->ethreshTypeGroup->setId(m_ui->eBinaryButton, cv::THRESH_BINARY);
+    m_ui->ethreshTypeGroup->setId(m_ui->eBinaryInvButton, cv::THRESH_BINARY_INV);
+    m_ui->ethreshTypeGroup->setId(m_ui->eTruncButton, cv::THRESH_TRUNC);
+    m_ui->ethreshTypeGroup->setId(m_ui->eTozeroButton, cv::THRESH_TOZERO);
+    m_ui->ethreshTypeGroup->setId(m_ui->eTozeroInvButton, cv::THRESH_TOZERO_INV);
+    m_ui->ethreshTypeGroup->setId(m_ui->eThreshDisableButton, -1);
+
+    m_ui->dilateTypeGroup->setId(m_ui->dRectButton, cv::MORPH_RECT);
+    m_ui->dilateTypeGroup->setId(m_ui->dCrossButton, cv::MORPH_CROSS);
+    m_ui->dilateTypeGroup->setId(m_ui->dEllipseButton, cv::MORPH_ELLIPSE);
+
+    m_ui->erodeTypeGroup->setId(m_ui->eRectButton, cv::MORPH_RECT);
+    m_ui->erodeTypeGroup->setId(m_ui->eCrossButton, cv::MORPH_RECT);
+    m_ui->erodeTypeGroup->setId(m_ui->eEllipseButton, cv::MORPH_RECT);
+
     ImageExplorer* imageExplorer = new ImageExplorer(m_ui);
     ImageLoader* imageLoader = new ImageLoader(imageExplorer);
     m_imageInfo = imageLoader->getInfo();
@@ -98,6 +113,11 @@ void DiceWindow::initImageStack(cv::Mat matImage) {
     connect(m_ui->ratioSlider, SIGNAL(valueChanged(int)), this, SLOT(onCannyChanged(int)));
     connect(m_ui->kernelSizeSlider, SIGNAL(valueChanged(int)), this, SLOT(onCannyChanged(int)));
 
+    connect(m_ui->dilateSizeSlider, SIGNAL(valueChanged(int)), this, SLOT(onEdgeChanged(int)));
+    connect(m_ui->dilateBlurSlider, SIGNAL(valueChanged(int)), this, SLOT(onEdgeChanged(int)));
+    connect(m_ui->erodeSizeSlider, SIGNAL(valueChanged(int)), this, SLOT(onEdgeChanged(int)));
+    connect(m_ui->erodeBlurSlider, SIGNAL(valueChanged(int)), this, SLOT(onEdgeChanged(int)));
+
     // Initialize controllers
     initControllers();
 
@@ -112,6 +132,14 @@ void DiceWindow::initImageStack(cv::Mat matImage) {
     connect(m_ui->lowThresholdSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onCannyParamChanged(int)));
     connect(m_ui->ratioSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onCannyParamChanged(int)));
     connect(m_ui->kernelSizeSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onCannyParamChanged(int)));
+
+    connect(m_ui->dilateSizeSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onEdgeParamChanged(int)));
+    connect(m_ui->dilateTypeGroup, SIGNAL(buttonPressed(int)), m_imageStack, SLOT(onEdgeParamChanged(int)));
+    connect(m_ui->dilateBlurSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onEdgeParamChanged(int)));
+    connect(m_ui->erodeSizeSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onEdgeParamChanged(int)));
+    connect(m_ui->erodeTypeGroup, SIGNAL(buttonPressed(int)), m_imageStack, SLOT(onEdgeParamChanged(int)));
+    connect(m_ui->erodeBlurSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onEdgeParamChanged(int)));
+    connect(m_ui->ethreshTypeGroup, SIGNAL(buttonPressed(int)), m_imageStack, SLOT(onEdgeParamChanged(int)));
 }
 
 void DiceWindow::showImageStack(int result)
@@ -156,6 +184,17 @@ void DiceWindow::initControllers()
         m_ui->ratioSlider->setSliderPosition(params->ratio);
         m_ui->kernelSizeSlider->setSliderPosition(params->kernelSize);
     }
+
+    {
+        EdgeParams* params = m_imageStack->getEdgeParams();
+        m_ui->dilateSizeSlider->setSliderPosition(params->dilateSize);
+        m_ui->dilateTypeGroup->button(params->dilateType)->setChecked(true);
+        m_ui->dilateBlurSlider->setSliderPosition(params->dilateBlur);
+        m_ui->erodeSizeSlider->setSliderPosition(params->erodeSize);
+        m_ui->erodeTypeGroup->button(params->erodeType)->setChecked(true);
+        m_ui->erodeBlurSlider->setSliderPosition(params->erodeBlur);
+        m_ui->ethreshTypeGroup->button(params->thresholdType)->setChecked(true);
+    }
 }
 
 void DiceWindow::onThreshChanged(int value)
@@ -180,4 +219,19 @@ void DiceWindow::onCannyChanged(int value)
         m_ui->ratioDisplay->setText(QString::number(value));
     else if (id.compare("kernelSizeSlider") == 0)
         m_ui->kernelSizeDisplay->setText(QString::number(value));
+}
+
+void DiceWindow::onEdgeChanged(int value)
+{
+    QObject* sender = QObject::sender();
+    QString id = sender->objectName();
+
+    if (id.compare("dilateSizeSlider") == 0)
+        m_ui->dilateSizeDisplay->setText(QString::number(value));
+    else if(id.compare("dilateBlurSlider") == 0)
+        m_ui->dilateBlurDisplay->setText(QString::number(value));
+    else if(id.compare("erodeSizeSlider") == 0)
+        m_ui->erodeSizeDisplay->setText(QString::number(value));
+    else if(id.compare("erodeBlurSlider") == 0)
+        m_ui->erodeBlurDisplay->setText(QString::number(value));
 }

@@ -31,6 +31,7 @@ public slots:
     void showImageStack(int result);
     void onThreshChanged(int value);
     void onCannyChanged(int value);
+    void onEdgeChanged(int value);
 
 private:
     Ui::DiceWindow* m_ui;
