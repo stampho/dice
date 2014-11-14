@@ -24,8 +24,8 @@ private:
     Face m_farthest;
 
     static std::vector<Face> getOppositeFaces(std::vector<Face> faces);
+    static double meanOfFaces(std::vector<Face> faces);
     std::vector<Face> getTopPips() const;
-    Face getNearestPip(Face ref) const;
 };
 
 #endif // CUBE_H

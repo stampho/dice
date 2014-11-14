@@ -116,67 +116,61 @@ Face Cube::getTopFace() const
 
 vector<Face> Cube::getTopPips() const
 {
-    vector<Face> pipFaces;
-    int size = (int)m_faces.size();
+    vector<Face> topPips;
+    size_t faceNum, pipNum, topNum;
+    double mean, dist1, dist2, maxDist;
+    Face top, bottom, curr;
 
-    vector<double> dists;
-    Face ref;
-    double dist;
-    for (int i = 0; i < size - 1; ++i) {
-        ref = m_faces[i];
-        for (int j = i + 1; j < size; ++j) {
-            dist = ref.getDistance(m_faces[j]);
-            dists.push_back(dist);
-        }
-    }
+    top = m_faces[0];
+    topPips.push_back(top);
 
-    double sum = std::accumulate(dists.begin(), dists.end(), 0.0);
-    double mean = sum / dists.size();
+    faceNum = m_faces.size();
+    pipNum = min(6, (int)faceNum);
+    if (faceNum == 1)
+        return topPips;
 
-    const Face* top = &m_faces[0];
-    const Face* bottom = &m_faces[size-1];
+    bottom = m_faces[faceNum-1];
+    mean = meanOfFaces(m_faces);
+    maxDist = bottom.getDistance(top);
 
-    pipFaces.push_back(m_faces[0]);
-
-    Face curr;
-    double maxDist = bottom->getDistance(m_faces[0]);
-    double dist1, dist2;
-    int m = min(6, size);
-    for (int i = 1; i < m; ++i) {
+    for (size_t i = 1; i < pipNum; ++i) {
         curr = m_faces[i];
-        dist1 = top->getDistance(curr);
-        dist2 = bottom->getDistance(curr);
+        dist1 = top.getDistance(curr);
+        dist2 = bottom.getDistance(curr);
 
-        if (dist1 < dist2 && (float)curr.getCenter().y < top->getCenter().y + maxDist - mean) {
-            pipFaces.push_back(curr);
+        if (dist1 < dist2 && curr.getCenter().y < top.getCenter().y + maxDist - mean) {
+            topPips.push_back(curr);
         }
     }
 
-    return pipFaces;
-}
+    topNum = topPips.size();
+    if (topNum == 1 || topNum == pipNum)
+        return topPips;
 
-Face Cube::getNearestPip(Face ref) const
-{
-    Face nearest, curr;
-    double minDist, dist;
-    int num = m_faces.size();
+    vector<Point> centers;
+    for (size_t i = 0; i < topNum; ++i)
+        centers.push_back(topPips[i].getCenter());
+    Moments m = moments(centers, true);
+    Point center(m.m10/m.m00, m.m01/m.m00);
 
-    nearest = m_faces[0];
-    if (nearest.getCenter() == ref.getCenter())
-        nearest = m_faces[1];
+    mean = meanOfFaces(topPips);
 
-    minDist = ref.getDistance(nearest);
-
-    for (int i = 1; i < num; ++i) {
+    bool contains;
+    for (size_t i = 1; i < faceNum; ++i) {
         curr = m_faces[i];
-        dist = curr.getDistance(ref);
-        if (dist != 0 && dist < minDist) {
-            minDist = dist;
-            nearest = curr;
+        contains = false;
+        for (size_t j = 0; j < topNum; ++j) {
+            if (curr.getCenter() == topPips[j].getCenter()) {
+                contains = true;
+                break;
+            }
         }
+
+        if (!contains && curr.getDistance(center) <= mean)
+            topPips.push_back(curr);
     }
 
-    return nearest;
+    return topPips;
 }
 
 vector<Cube> Cube::collectCubes(vector<Face> faces, bool storePips)
@@ -224,5 +218,24 @@ vector<Face> Cube::getOppositeFaces(vector<Face> faces)
     }
 
     return result;
+}
+
+double Cube::meanOfFaces(vector<Face> faces)
+{
+    double dist, sum;
+    vector<double> dists;
+    Face ref;
+    size_t size = faces.size();
+
+    for (size_t i = 0; i < size - 1; ++i) {
+        ref = faces[i];
+        for (size_t j = i + 1; j < size; ++j) {
+            dist = ref.getDistance(faces[j]);
+            dists.push_back(dist);
+        }
+    }
+
+    sum = accumulate(dists.begin(), dists.end(), 0.0);
+    return sum / dists.size();
 }
 

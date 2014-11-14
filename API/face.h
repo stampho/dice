@@ -11,6 +11,7 @@ public:
     cv::Point getCenter() const;
     std::vector<cv::Point> getVertices() const;
     double getDistance(Face other) const;
+    double getDistance(cv::Point other) const;
     cv::Mat crop(cv::Mat image);
 
     cv::Mat draw(cv::Mat image, cv::Scalar color = cv::Scalar(0, 0, 255), bool markCenter = true);

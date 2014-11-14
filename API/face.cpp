@@ -51,6 +51,11 @@ double Face::getDistance(Face other) const
     return norm(m_center - other.getCenter());
 }
 
+double Face::getDistance(Point other) const
+{
+    return norm(m_center - other);
+}
+
 Mat Face::crop(Mat image)
 {
     Mat mask = Mat::zeros(image.rows, image.cols, CV_8UC1);
