@@ -51,6 +51,7 @@ terminalbol kiadott ./dice paranccsal.
 FILE LIST
 ---------
 
+File                     |  Description
 -------------------------------------------------------------------------
 dice.pro                 |  qmake project file
 dicewindow.(cpp|h|ui)    |  GUI forras fajlok
