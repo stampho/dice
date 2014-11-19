@@ -11,6 +11,12 @@
 #include "API/cube.h"
 #include "API/face.h"
 
+struct CommonParams {
+    bool histogram;
+    bool removepips;
+    bool canny;
+};
+
 struct ThresholdParams {
     int thresh;
     int maxval;
@@ -71,6 +77,8 @@ public:
     };
 
     cv::Mat getImage(Phase phase);
+
+    CommonParams* getCommonParams();
     ThresholdParams* getThresholdParams();
     CannyParams* getCannyParams();
     EdgeParams* getEdgeParams();
@@ -99,6 +107,7 @@ public slots:
     void detectTops(QVector<Cube>);
     void detectPips(QVector<cv::Mat>);
 
+    void onCommonParamChanged(bool value);
     void onThresholdParamChanged(int value);
     void onCannyParamChanged(int value);
     void onEdgeParamChanged(int value);
@@ -106,11 +115,10 @@ public slots:
 private:
     cv::Mat m_stack[PhaseCount];
 
+    CommonParams m_commonParams;
     ThresholdParams m_thresholdParams;
     CannyParams m_cannyParams;
     EdgeParams m_edgeParams;
-
-    bool m_cannyEnabled;
 
     static QVector<Outline> collectOutlines(cv::Mat imageBin);
     static QVector<Face> collectFaces(QVector<Outline> outlines);

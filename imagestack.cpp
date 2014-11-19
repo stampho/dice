@@ -28,7 +28,9 @@ ImageStack::ImageStack(cv::Mat image, QObject* parent)
 {
     m_stack[Original] = image;
 
-    m_cannyEnabled = true;
+    m_commonParams.histogram = false;
+    m_commonParams.removepips = true;
+    m_commonParams.canny = true;
 
     m_thresholdParams.thresh = 127;
     m_thresholdParams.maxval = 255;
@@ -66,6 +68,11 @@ cv::Mat ImageStack::getImage(Phase phase)
     return m_stack[phase];
 }
 
+CommonParams* ImageStack::getCommonParams()
+{
+    return &m_commonParams;
+}
+
 ThresholdParams* ImageStack::getThresholdParams()
 {
     return &m_thresholdParams;
@@ -86,7 +93,8 @@ void ImageStack::preProcess()
     cv::Mat image = m_stack[Original].clone();
     if (image.channels() > 1)
         cv::cvtColor(image, image, CV_RGB2GRAY);
-    //cv::equalizeHist(image, image);
+    if (m_commonParams.histogram)
+        cv::equalizeHist(image, image);
 
     m_stack[PreProcess] = image;
     Q_EMIT(preProcessDone());
@@ -96,7 +104,7 @@ void ImageStack::detectEdges()
 {
     cv::Mat image = m_stack[PreProcess].clone();
 
-    if (m_cannyEnabled)
+    if (m_commonParams.canny)
         cv::Canny(image, image, m_cannyParams.lowThreshold, m_cannyParams.lowThreshold*m_cannyParams.ratio, m_cannyParams.kernelSize);
     else
         cv::threshold(image, image, m_thresholdParams.thresh, m_thresholdParams.maxval, m_thresholdParams.type);
@@ -109,13 +117,15 @@ void ImageStack::removePips()
 {
     cv::Mat imageBin = m_stack[EdgeDetection].clone();
 
-    QVector<Pip> pips = ImageStack::collectPips(imageBin);
-    for (int i = 0; i < pips.size(); ++i) {
-        cv::fillConvexPoly(imageBin, pips.at(i), cv::Scalar(0), 8, 0);
+    if (m_commonParams.removepips) {
+        QVector<Pip> pips = ImageStack::collectPips(imageBin);
+        for (int i = 0; i < pips.size(); ++i) {
+            cv::fillConvexPoly(imageBin, pips.at(i), cv::Scalar(0), 8, 0);
+        }
+        cv::polylines(imageBin, pips.toStdVector(), true, cv::Scalar(0), 3, CV_AA);
     }
-    cv::polylines(imageBin, pips.toStdVector(), true, cv::Scalar(0), 3, CV_AA);
-    m_stack[RemovePips] = imageBin;
 
+    m_stack[RemovePips] = imageBin;
     Q_EMIT(removePipsDone());
 }
 
@@ -124,9 +134,6 @@ void ImageStack::enhanceEdges()
     cv::Mat image = m_stack[RemovePips].clone();
 
     int size, type;
-    //int type = cv::MORPH_RECT;
-    //int type = cv::MORPH_CROSS;
-    //int type = cv::MORPH_ELLIPSE;
 
     size = m_edgeParams.dilateSize;
     type = m_edgeParams.dilateType;
@@ -290,12 +297,25 @@ void ImageStack::detectPips(QVector<cv::Mat> topFaces)
     Q_EMIT(detectPipsDone(pips.size()));
 }
 
+void ImageStack::onCommonParamChanged(bool value)
+{
+    QObject* sender = QObject::sender();
+    QString id = sender->objectName();
+
+    if (id.compare("histogramCB") == 0)
+        m_commonParams.histogram = value;
+   else if (id.compare("pipCB") == 0)
+        m_commonParams.removepips = value;
+
+   preProcess();
+}
+
 void ImageStack::onThresholdParamChanged(int value)
 {
     QObject* sender = QObject::sender();
     QString id = sender->objectName();
 
-    m_cannyEnabled = false;
+    m_commonParams.canny = false;
 
     if (id.compare("threshSlider") == 0)
         m_thresholdParams.thresh = value;
@@ -312,7 +332,7 @@ void ImageStack::onCannyParamChanged(int value)
     QObject* sender = QObject::sender();
     QString id = sender->objectName();
 
-    m_cannyEnabled = true;
+    m_commonParams.canny = true;
 
     if (id.compare("lowThresholdSlider") == 0)
         m_cannyParams.lowThreshold = value;

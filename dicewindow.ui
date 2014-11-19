@@ -115,8 +115,39 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>3</number>
+           <number>4</number>
           </property>
+          <widget class="QWidget" name="tab_5">
+           <attribute name="title">
+            <string>PreProcess</string>
+           </attribute>
+           <widget class="QCheckBox" name="histogramCB">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>10</y>
+              <width>171</width>
+              <height>20</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Histogram Equalization</string>
+            </property>
+           </widget>
+           <widget class="QCheckBox" name="pipCB">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>40</y>
+              <width>131</width>
+              <height>20</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Remove Pips</string>
+            </property>
+           </widget>
+          </widget>
           <widget class="QWidget" name="tab">
            <attribute name="title">
             <string>Threshold</string>

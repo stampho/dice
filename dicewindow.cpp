@@ -125,6 +125,9 @@ void DiceWindow::initImageStack(cv::Mat matImage) {
     m_imageStack->preProcess();
 
     // Bind controller events to the ImageStack
+    connect(m_ui->histogramCB, SIGNAL(clicked(bool)), m_imageStack, SLOT(onCommonParamChanged(bool)));
+    connect(m_ui->pipCB, SIGNAL(clicked(bool)), m_imageStack, SLOT(onCommonParamChanged(bool)));
+
     connect(m_ui->threshSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
     connect(m_ui->maxvalSlider, SIGNAL(valueChanged(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
     connect(m_ui->threshTypeGroup, SIGNAL(buttonPressed(int)), m_imageStack, SLOT(onThresholdParamChanged(int)));
@@ -166,6 +169,12 @@ void DiceWindow::updateInfo(int result)
 
 void DiceWindow::initControllers()
 {
+    {
+        CommonParams* params = m_imageStack->getCommonParams();
+        m_ui->histogramCB->setChecked(params->histogram);
+        m_ui->pipCB->setChecked(params->removepips);
+    }
+
     {
         ThresholdParams* params = m_imageStack->getThresholdParams();
         m_ui->threshDisplay->setText(QString::number(params->thresh));
