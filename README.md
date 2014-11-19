@@ -52,12 +52,13 @@ FILE LIST
 ---------
 
 File                     |  Description
--------------------------------------------------------------------------
+------------------------ | ----------------------------------------------------
 dice.pro                 |  qmake project file
 dicewindow.(cpp|h|ui)    |  GUI forras fajlok
 imageexplorer.(cpp|h)    |  kep bongeszest megvalosito kod
 imageloader.(cpp|h)      |  kep betoltes forrasa
-imagestack.(cpp|h)       |  detektalas lepeseit megvalosito kod, minden lepes kepe tarolva van (stack)
+imagestack.(cpp|h)       |  detektalas lepeseit megvalosito kod, minden
+                         |  lepes kepe tarolva van (stack)
 README                   |  ez a file
 API/core.h               |  altalanosan hasznlat tipusok es makrok
 API/cube.(cpp|h)         |  kockan vegrehajthato muveletek kodja
